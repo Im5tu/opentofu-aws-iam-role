@@ -3,24 +3,23 @@ data "aws_iam_policy_document" "assume_role" {
     sid = "AssumeRole"
 
     dynamic "principals" {
-      for_each = [var.assume_role_services]
+      for_each = var.assume_role_services
       iterator = p
 
       content {
         type        = "Service"
-        identifiers = p.value
+        identifiers = [p.value]
       }
     }
 
     dynamic "principals" {
-      for_each = [var.assume_role_arns]
+      for_each = var.assume_role_arns
       iterator = p
 
       content {
         type        = "AWS"
-        identifiers = p.value
+        identifiers = [p.value]
       }
-
     }
 
     actions = ["sts:AssumeRole", "sts:TagSession"]
@@ -36,9 +35,10 @@ resource "aws_iam_role" "role" {
   description          = var.description
   max_session_duration = var.max_session_duration
   permissions_boundary = var.permission_boundary
-  tags = merge(var.tags, {
-    Name = var.name
-  })
+  tags = merge(
+    var.tags,
+    var.name != null ? { Name = var.name } : {}
+  )
 }
 
 resource "aws_iam_role_policy" "role_policies" {
